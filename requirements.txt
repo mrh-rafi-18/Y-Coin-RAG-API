@@ -1,0 +1,9 @@
+django
+djangorestframework
+djangorestframework-simplejwt
+drf-spectacular
+redis
+django-redis
+celery
+daphne
+pillow
