@@ -8,3 +8,9 @@ celery
 daphne
 pillow
 python-dotenv
+
+
+langchain-text-splitters
+langchain
+langchain-core
+langchain-pinecone
