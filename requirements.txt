@@ -7,3 +7,4 @@ django-redis
 celery
 daphne
 pillow
+python-dotenv

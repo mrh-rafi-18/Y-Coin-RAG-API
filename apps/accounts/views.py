@@ -8,6 +8,8 @@ from rest_framework import status
 from .models import *
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from .tasks import send_otp_email
 from django.contrib.auth import get_user_model
 from .serializers import *
 from .utils import *
@@ -42,6 +44,7 @@ class UserListCreateAPIView(ListCreateAPIView):
 )
 class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
+    parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request):
         serializer = UserSerializer(data=request.data)
@@ -71,7 +74,10 @@ class RegisterAPIView(APIView):
             expires_at=timezone.now() + timedelta(minutes=5),
         )
 
-        # TODO: send `code` to user's email
+        send_otp_email.delay(
+                email=email,
+                code=code,
+            )
 
         return Response(
             {
@@ -80,6 +86,8 @@ class RegisterAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
 
 
 @extend_schema(
@@ -142,10 +150,10 @@ class RegisterRequestOTPAPIView(APIView):
             expires_at=timezone.now() + timedelta(minutes=5),
         )
 
-        # TODO: send_otp_email(
-        #     email=email,
-        #     code=code,
-        # )
+        send_otp_email.delay(
+                email=email,
+                code=code,
+            )
 
         return Response(
             {
@@ -212,10 +220,10 @@ class PasswordResetRequestOTPAPIView(APIView):
             expires_at=timezone.now() + timedelta(minutes=5),
         )
 
-        # TODO: send_otp_email(
-        #     email=email,
-        #     code=code,
-        # )
+        send_otp_email.delay(
+                email=email,
+                code=code,
+            )
 
         return Response(
             {
@@ -428,7 +436,7 @@ class ProfileView(RetrieveUpdateAPIView):
     tags=["Auth"],
 )
 class LoginView(TokenObtainPairView):
-    pass
+    serializer_class = LoginSerializer
 
 
 @extend_schema(

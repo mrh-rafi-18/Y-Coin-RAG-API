@@ -3,6 +3,8 @@ from rest_framework.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import *
 
 
@@ -72,4 +74,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         validate_password(value)
         return value
 
+
+
+class LoginSerializer(TokenObtainPairSerializer):
+
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if not self.user.is_email_verified:
+            raise serializers.ValidationError(
+                {"detail": "No account is registered with this email."}
+            )
+
+        data["message"] = "Login successful."
+        data["user"] = UserSerializer(self.user).data
+
+        return data
 
