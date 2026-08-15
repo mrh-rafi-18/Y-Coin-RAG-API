@@ -14,3 +14,6 @@ langchain-text-splitters
 langchain
 langchain-core
 langchain-pinecone
+langchain-pinecone 
+langchain-openai
+pydantic

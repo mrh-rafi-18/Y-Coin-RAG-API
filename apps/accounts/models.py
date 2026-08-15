@@ -44,3 +44,12 @@ class OTP(models.Model):
 
     def __str__(self):
         return f"{self.email} - {self.purpose}"
+
+
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    token_hash = models.CharField(max_length=128, unique=True)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
