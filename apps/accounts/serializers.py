@@ -99,3 +99,9 @@ class ResetPasswordSerializer(serializers.Serializer):
         write_only=True,
         min_length=8,
     )
+
+
+
+
+class LogoutSerializer(serializers.Serializer):
+    refresh = serializers.CharField()

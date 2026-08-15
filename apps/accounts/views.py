@@ -9,6 +9,7 @@ from .models import *
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from .tasks import send_otp_email
 from django.contrib.auth import get_user_model
 from .serializers import *
@@ -487,3 +488,36 @@ class LoginView(TokenObtainPairView):
 )
 class RefreshTokenView(TokenRefreshView):
     pass
+
+
+
+@extend_schema(
+    tags=["Auth"],
+    request=LogoutSerializer,
+    responses={
+        200: {"description": "Logout successful."},
+        400: {"description": "Invalid or expired refresh token."},
+    },
+)
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = LogoutSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        refresh_token = serializer.validated_data["refresh"]
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            return Response(
+                {"detail": "Invalid or expired refresh token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"detail": "Logout successful."},
+            status=status.HTTP_200_OK,
+        )
