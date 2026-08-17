@@ -16,4 +16,5 @@ langchain-core
 langchain-pinecone
 langchain-pinecone 
 langchain-openai
+langchain-cohere
 pydantic
