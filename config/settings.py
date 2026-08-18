@@ -49,14 +49,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'drf_spectacular',
+    "drf_spectacular_websocket",
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
     'rest_framework',
     'rest_framework_simplejwt',
     "rest_framework_simplejwt.token_blacklist",
     'apps.accounts',
+    'apps.rag',
+    "channels"
     # 'apps.common',
     # 'apps.content',
-    # 'apps.rag',
 ]
 
 MIDDLEWARE = [
@@ -148,6 +151,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
 STATIC_URL = 'static/'
 
 
@@ -156,8 +161,18 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "Y-Coin AI API documentation",
     "VERSION": "1.0.0",
 
-    # Important for file uploads
-    'COMPONENT_SPLIT_REQUEST': True,
+    "COMPONENT_SPLIT_REQUEST": True,
+
+    "DEFAULT_GENERATOR_CLASS":
+        "drf_spectacular_websocket.schemas.WsSchemaGenerator",
+
+    "SWAGGER_UI_DIST": "SIDECAR",
+    "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
+    "REDOC_DIST": "SIDECAR",
+
+    "SWAGGER_UI_SETTINGS": {
+        "connectSocket": True,
+    },
 }
 
 

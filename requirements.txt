@@ -4,6 +4,7 @@ djangorestframework-simplejwt
 drf-spectacular
 redis
 django-redis
+django-channels
 celery
 daphne
 pillow
