@@ -1,10 +1,13 @@
-from django.urls import path
-
+from django.urls import path,include
+from rest_framework.routers import DefaultRouter
 from .views import *
 
+router = DefaultRouter()
+
+# Registers at: /api/accounts/users/
+router.register(r'users', AdminUserViewSet, basename='admin-user')
 
 urlpatterns = [
-    path("users/", UserListCreateAPIView.as_view(), name="user-list-create"),
     path("auth/register/", RegisterAPIView.as_view(), name="register"),
     path("auth/register/request-otp/", RegisterRequestOTPAPIView.as_view(), name="register-request-otp"),
     path("auth/password-reset/request-otp/", PasswordResetRequestOTPAPIView.as_view(), name="password-reset-request-otp"),
@@ -17,4 +20,7 @@ urlpatterns = [
     path("auth/change-password/", ChangePasswordAPIView.as_view(), name="change-password"),
     path("password-reset/",ResetPasswordAPIView.as_view(),name="password-reset"),
     path("logout/", LogoutView.as_view(), name="logout"),
+
+    #admin dashboard
+    path('', include(router.urls)),
 ]

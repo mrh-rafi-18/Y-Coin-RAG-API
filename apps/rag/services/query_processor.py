@@ -25,7 +25,7 @@ class UserIntent(BaseModel):
 # Processor Functions
 # ==========================================
 
-async def enhance_user_query(
+def enhance_user_query(
     user_query: str, 
     chat_summary: Optional[str] = None
 ) -> EnhancedQueries:
@@ -66,7 +66,7 @@ async def enhance_user_query(
         return EnhancedQueries(enhanced_query_1=safe_fallback, enhanced_query_2=safe_fallback)
 
 
-async def classify_user_intent(
+def classify_user_intent(
     user_query: str, 
     chat_summary: Optional[str] = None
 ) -> UserIntent:

@@ -105,3 +105,35 @@ class ResetPasswordSerializer(serializers.Serializer):
 
 class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
+
+
+
+class AdminUserSerializer(serializers.ModelSerializer):
+    role_display = serializers.CharField(
+        source="get_role_display",
+        read_only=True,
+    )
+
+    class Meta:
+        model = User
+        fields = [
+            'id',
+            'profile_name',
+            'email',
+            'avatar',
+            'role',
+            'role_display',
+            'is_email_verified',
+            'deleted_at',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = [
+            'id',
+            'email',  # Prevent admins from accidentally changing user emails
+            'role_display',
+            'is_email_verified',
+            'deleted_at',
+            'created_at',
+            'updated_at'
+        ]

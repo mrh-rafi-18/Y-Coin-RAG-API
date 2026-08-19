@@ -5,7 +5,7 @@ class ConversationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Conversation
         fields = ['id', 'user', 'title', 'conversation_history_summary', 'last_message_at', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'user', 'last_message_at', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'user', 'last_message_at','conversation_history_summary', 'created_at', 'updated_at']
 
 
 

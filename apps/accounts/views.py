@@ -3,7 +3,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveAPIView, Retrieve
 from datetime import timedelta
 from django.utils import timezone
 from rest_framework.views import APIView
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status
 from .models import *
 from rest_framework.permissions import AllowAny
@@ -20,21 +20,19 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView
 )
+import logging
+from rest_framework import viewsets, mixins
+from ..common.permissions import IsAdminRole 
+
+
+
+
 
 # Create your views here.
-
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
-
-@extend_schema(
-    tags=["Users"],
-    request=UserSerializer,
-    responses=UserSerializer,
-)
-class UserListCreateAPIView(ListCreateAPIView):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
 
 
 @extend_schema(
@@ -521,3 +519,72 @@ class LogoutView(APIView):
             {"detail": "Logout successful."},
             status=status.HTTP_200_OK,
         )
+
+
+
+
+
+
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all users",
+        description="Retrieves a list of all active users. Restricted to Admins.",
+        tags=["Admin dashboard"]
+    ),
+    retrieve=extend_schema(
+        summary="Retrieve user profile",
+        description="Gets the details of a specific user by UUID. Restricted to Admins.",
+        tags=["Admin dashboard"]
+    ),
+    update=extend_schema(
+        summary="Update user details",
+        description="Fully updates user details (e.g., changing role). Restricted to Admins.",
+        tags=["Admin dashboard"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update user",
+        description="Partially updates user details (e.g., toggling role to 'admin' via PATCH). Restricted to Admins.",
+        tags=["Admin dashboard"]
+    ),
+    destroy=extend_schema(
+        summary="Delete a user",
+        description="Soft-deletes a user by setting the deleted_at timestamp and deactivating the account. Restricted to Admins.",
+        tags=["Admin dashboard"]
+    )
+)
+class AdminUserViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet
+):
+    """
+    ViewSet for the Admin dashboard to manage user accounts.
+    Allows viewing, updating roles, and soft-deleting users.
+    Creation (POST) is disabled here as it should be handled via the standard auth/registration flow.
+    """
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdminRole]
+
+    def get_queryset(self):
+        """
+        Retrieves all users who have not been soft-deleted.
+        """
+        try:
+            # We exclude soft-deleted users so they don't clog up the active admin list
+            return User.objects.filter(deleted_at__isnull=True).order_by('-created_at')
+        except Exception as e:
+            logger.error(f"Error fetching users for admin {self.request.user.id}: {e}", exc_info=True)
+            return User.objects.none()
+
+    def perform_destroy(self, instance):
+        """
+        Override the default destroy behavior to perform a soft-delete.
+        This updates the 'deleted_at' field and disables login capabilities.
+        """
+        instance.deleted_at = timezone.now()
+        instance.is_active = False  # Standard Django AbstractUser field to prevent logins
+        instance.save(update_fields=['deleted_at', 'is_active', 'updated_at'])
+        
+        logger.info(f"Admin {self.request.user.id} soft-deleted user {instance.id} ({instance.email})")
