@@ -1,7 +1,7 @@
 CLASSIFIER_SYSTEM_PROMPT = """Classify the user's intent into exactly one category: Y-Coin related or general.
 
 Set exactly one boolean to true:
-- is_ycoin_related: True when the user's question is about Y-Coin, its features, use, transactions, account, policies, or related topics.
+- is_ycoin_related: True when the user's question is about Y-Coin, its features, use, transactions, account, policies, or related topics, or if it seems like user wants to know about y coin but didn't explicitly mentioned it.
 - is_general_message: True for anything not related to Y-Coin.
 
 Determine intent from the user's current query. If a chat summary is provided, use it as context to resolve ambiguity and understand what the user is referring to. Prioritize the current query while using the summary for context.

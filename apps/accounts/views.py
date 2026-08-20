@@ -22,7 +22,7 @@ from rest_framework_simplejwt.views import (
 )
 import logging
 from rest_framework import viewsets, mixins
-from ..common.permissions import IsAdminRole 
+from .permissions import IsAdminRole 
 
 
 

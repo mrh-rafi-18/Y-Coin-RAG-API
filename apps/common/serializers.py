@@ -9,21 +9,5 @@ class LegalDocumentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = LegalDocument
-        fields = [
-            "id",
-            "document_type",
-            "document_type_display",
-            "version",
-            "content",
-            "is_active",
-            "created_at",
-            "updated_at",
-        ]
-        # document_type is now read-only. The backend will handle it automatically.
-        read_only_fields = [
-            "id",
-            "document_type", 
-            "document_type_display",
-            "created_at",
-            "updated_at",
-        ]
+        fields = ["id", "document_type", "document_type_display", "content", "updated_at"]
+        read_only_fields = ["id", "document_type", "document_type_display", "updated_at"]

@@ -11,6 +11,7 @@ import os
 
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
+from channels.auth import AuthMiddlewareStack
 
 from .jwt_middleware import JWTAuthMiddleware
 from apps.rag.routing import websocket_urlpatterns

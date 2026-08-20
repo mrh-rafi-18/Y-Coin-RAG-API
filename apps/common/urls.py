@@ -1,15 +1,8 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import TermsAndConditionsViewSet, PrivacyPolicyViewSet
-
-router = DefaultRouter()
-
-# Registers at: /api/core/terms/
-router.register(r'terms', TermsAndConditionsViewSet, basename='terms')
-
-# Registers at: /api/core/privacy/
-router.register(r'privacy', PrivacyPolicyViewSet, basename='privacy')
+from django.urls import path
+from .views import TermsView, PrivacyView
 
 urlpatterns = [
-    path('', include(router.urls)),
+    # Both Admin and Public hit these same endpoints
+    path('terms/', TermsView.as_view(), name='terms'),
+    path('privacy/', PrivacyView.as_view(), name='privacy'),
 ]

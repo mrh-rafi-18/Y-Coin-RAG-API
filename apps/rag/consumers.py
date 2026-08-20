@@ -13,12 +13,14 @@ from .serializers import (
 from .services.instances import get_chat, get_retriever
 from .services.query_processor import classify_user_intent, enhance_user_query
 
+
 logger = logging.getLogger(__name__)
 
 class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
         user = self.scope.get("user")
+        print(user)
 
         logger.info(f"WebSocket connection attempt by user: {user}")
 
@@ -56,6 +58,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # 2. Get existing conversation or create a new one
         if conversation_id:
+            await self.send_status(
+                "analyzing",
+                "Reading previous conversation..."
+            )
             conversation = await self.get_conversation(conversation_id, user)
 
             if conversation is None:
@@ -84,6 +90,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             chat_engine = get_chat()
             
             # Classify intent (blocking call wrapped in async)
+            await self.send_status(
+                "Classifying",
+                "Classifying query intent..."
+            )
             intent = await database_sync_to_async(classify_user_intent)(
                 user_query=user_query, 
                 chat_summary=chat_summary
@@ -92,6 +102,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             # Determine which stream to use based on intent
             if intent.is_general_message:
                 logger.info("Routing: Standard Chat")
+                await self.send_status(
+                    "Generating",
+                    "Generating Response..."
+                )
                 sync_response_stream = chat_engine.stream_standard_response(
                     system_message=system_prompt,
                     prev_chat_summary=chat_summary,
@@ -101,12 +115,20 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 logger.info("Routing: RAG Chat")
                 
                 # Enhance query and retrieve documents safely in async wrappers
+                await self.send_status(
+                    "Enhancing",
+                    "Enhancing your query for better result..."
+                )
                 enhanced = await database_sync_to_async(enhance_user_query)(
                     user_query=user_query, 
                     chat_summary=chat_summary
                 )
                 enhanced_list = [enhanced.enhanced_query_1, enhanced.enhanced_query_2]
-                
+
+                await self.send_status(
+                    "Searching",
+                    "Searching knowledgebase for relevent information..."
+                )
                 retriever = get_retriever()
                 documents = await database_sync_to_async(retriever.retrieve)(
                     original_query=user_query, 
@@ -114,7 +136,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 )
                 
                 context_str = "\n\n".join([doc.page_content for doc in documents]) if documents else "No relevant documents found."
-                
+
+
+                await self.send_status(
+                    "Generating",
+                    "Generating Response..."
+                )
                 sync_response_stream = chat_engine.stream_rag_response(
                     system_message=system_prompt,
                     prev_chat_summary=chat_summary,
@@ -217,6 +244,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         """Saves the new AI-generated summary to the conversation model."""
         conversation.conversation_history_summary = new_summary
         conversation.save(update_fields=["conversation_history_summary", "updated_at"])
+
+
+    async def send_status(self, status, message):
+        await self.send_json({
+            "type": "chat.status",
+            "status": status,
+            "message": message,
+        })
 
     async def disconnect(self, code):
         logger.info(f"WebSocket disconnected with code {code}")

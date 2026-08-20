@@ -1,110 +1,66 @@
-import logging
-from rest_framework import viewsets
-from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
-from drf_spectacular.types import OpenApiTypes
+from rest_framework import generics
+from rest_framework.permissions import AllowAny
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
 from .models import LegalDocument
 from .serializers import LegalDocumentSerializer
-from .permissions import IsAdminRole
+from ..accounts.permissions import IsAdminRole
 
-logger = logging.getLogger(__name__)
+# --- CONSOLIDATED VIEWS (GET for Public, PUT for Admin) ---
 
-# Helper function to keep our Swagger schema code DRY (Don't Repeat Yourself)
-def get_document_schema(doc_name):
-    return {
-        "list": extend_schema(
-            summary=f"List all {doc_name} versions",
-            description=f"Retrieves a list of all {doc_name} versions. Can be filtered by active status.",
-            tags=["Admin dashboard"],
-            parameters=[
-                OpenApiParameter(
-                    name="is_active",
-                    description="Filter by active status (true/false).",
-                    required=False,
-                    type=OpenApiTypes.BOOL,
-                    location=OpenApiParameter.QUERY
-                )
-            ]
-        ),
-        "retrieve": extend_schema(
-            summary=f"Retrieve a {doc_name}",
-            description=f"Gets the details of a specific {doc_name} by its ID.",
-            tags=["Admin dashboard"]
-        ),
-        "create": extend_schema(
-            summary=f"Create a {doc_name}",
-            description=f"Uploads a new version of {doc_name}. The document type is inferred automatically.",
-            tags=["Admin dashboard"]
-        ),
-        "update": extend_schema(
-            summary=f"Update a {doc_name}",
-            description=f"Fully updates a {doc_name}.",
-            tags=["Admin dashboard"]
-        ),
-        "partial_update": extend_schema(
-            summary=f"Partially update a {doc_name}",
-            description=f"Partially updates a {doc_name} (e.g., toggling is_active).",
-            tags=["Admin dashboard"]
-        ),
-        "destroy": extend_schema(
-            summary=f"Delete a {doc_name}",
-            description=f"Permanently deletes a {doc_name}.",
-            tags=["Admin dashboard"]
-        )
-    }
-
-
-@extend_schema_view(**get_document_schema("Terms & Conditions"))
-class TermsAndConditionsViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet exclusively for Terms & Conditions.
-    """
+@extend_schema_view(
+    get=extend_schema(
+        summary="Retrieve Terms & Conditions",
+        description="Public endpoint to read the singleton Terms & Conditions.",
+        tags=["Admin dashboard"]
+    ),
+    put=extend_schema(
+        summary="Update Terms & Conditions (Admin)",
+        description="Overwrites the existing Terms & Conditions document. Restricted to Admins.",
+        tags=["Admin dashboard"]
+    )
+)
+class TermsView(generics.RetrieveUpdateAPIView):
     serializer_class = LegalDocumentSerializer
-    permission_classes = [IsAdminRole]
+    http_method_names = ['get', 'put']
 
-    def get_queryset(self):
-        try:
-            # Force the queryset to only return Terms & Conditions
-            queryset = LegalDocument.objects.filter(document_type=LegalDocument.DocumentType.TERMS)
-            
-            is_active_param = self.request.query_params.get('is_active')
-            if is_active_param is not None:
-                is_active = is_active_param.lower() == 'true'
-                queryset = queryset.filter(is_active=is_active)
-                
-            return queryset
-        except Exception as e:
-            logger.error(f"Error fetching Terms for admin {self.request.user.id}: {e}", exc_info=True)
-            return LegalDocument.objects.none()
+    def get_permissions(self):
+        """
+        Allow anyone to read (GET), but restrict updates (PUT) to Admins.
+        """
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminRole()]
 
-    def perform_create(self, serializer):
-        # Automatically inject the correct document type on save
-        serializer.save(document_type=LegalDocument.DocumentType.TERMS)
+    def get_object(self):
+        obj, _ = LegalDocument.objects.get_or_create(document_type=LegalDocument.DocumentType.TERMS)
+        return obj
 
 
-@extend_schema_view(**get_document_schema("Privacy Policy"))
-class PrivacyPolicyViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet exclusively for Privacy Policies.
-    """
+@extend_schema_view(
+    get=extend_schema(
+        summary="Retrieve Privacy Policy",
+        description="Public endpoint to read the singleton Privacy Policy.",
+        tags=["Admin dashboard"]
+    ),
+    put=extend_schema(
+        summary="Update Privacy Policy (Admin)",
+        description="Overwrites the existing Privacy Policy document. Restricted to Admins.",
+        tags=["Admin dashboard"]
+    )
+)
+class PrivacyView(generics.RetrieveUpdateAPIView):
     serializer_class = LegalDocumentSerializer
-    permission_classes = [IsAdminRole]
+    http_method_names = ['get', 'put']
 
-    def get_queryset(self):
-        try:
-            # Force the queryset to only return Privacy Policies
-            queryset = LegalDocument.objects.filter(document_type=LegalDocument.DocumentType.PRIVACY)
-            
-            is_active_param = self.request.query_params.get('is_active')
-            if is_active_param is not None:
-                is_active = is_active_param.lower() == 'true'
-                queryset = queryset.filter(is_active=is_active)
-                
-            return queryset
-        except Exception as e:
-            logger.error(f"Error fetching Privacy Policy for admin {self.request.user.id}: {e}", exc_info=True)
-            return LegalDocument.objects.none()
+    def get_permissions(self):
+        """
+        Allow anyone to read (GET), but restrict updates (PUT) to Admins.
+        """
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminRole()]
 
-    def perform_create(self, serializer):
-        # Automatically inject the correct document type on save
-        serializer.save(document_type=LegalDocument.DocumentType.PRIVACY)
+    def get_object(self):
+        obj, _ = LegalDocument.objects.get_or_create(document_type=LegalDocument.DocumentType.PRIVACY)
+        return obj
